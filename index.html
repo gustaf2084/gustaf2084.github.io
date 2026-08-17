@@ -1,0 +1,376 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#1b201d">
+  <link rel="icon" href="data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=">
+  <title>茵臣九华黄精·百问百答</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #1b201d;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      min-height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: #1b201d;
+    }
+
+    button {
+      font: inherit;
+    }
+
+    .viewer {
+      position: relative;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
+      width: 100%;
+      height: 100vh;
+      height: 100dvh;
+      padding-top: env(safe-area-inset-top);
+      color: #f7f6f1;
+      touch-action: pan-y;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .stage {
+      position: relative;
+      display: grid;
+      min-height: 0;
+      place-items: center;
+      padding: 18px 72px;
+      overflow: hidden;
+    }
+
+    .page-frame {
+      position: relative;
+      width: min(100%, calc((100dvh - 102px) * 0.7072));
+      max-height: 100%;
+      aspect-ratio: 595.25 / 842;
+      background: #fff;
+      box-shadow: 0 20px 56px rgb(0 0 0 / 32%);
+    }
+
+    .page-image {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      opacity: 1;
+      transition: opacity 180ms ease;
+      -webkit-user-drag: none;
+    }
+
+    .page-image.is-changing {
+      opacity: 0;
+    }
+
+    .nav-button {
+      position: absolute;
+      z-index: 2;
+      top: 50%;
+      display: grid;
+      width: 48px;
+      height: 64px;
+      padding: 0;
+      place-items: center;
+      transform: translateY(-50%);
+      border: 1px solid rgb(255 255 255 / 16%);
+      border-radius: 6px;
+      background: rgb(10 13 11 / 56%);
+      color: #fff;
+      cursor: pointer;
+      transition: background 140ms ease, border-color 140ms ease, opacity 140ms ease;
+    }
+
+    .nav-button::before {
+      width: 13px;
+      height: 13px;
+      content: "";
+      border-top: 2px solid currentColor;
+      border-right: 2px solid currentColor;
+    }
+
+    .nav-button:hover:not(:disabled),
+    .nav-button:focus-visible {
+      border-color: #d9b969;
+      background: #2f4335;
+      outline: none;
+    }
+
+    .nav-button:disabled {
+      opacity: 0.25;
+      cursor: default;
+    }
+
+    .nav-button--previous {
+      left: max(14px, env(safe-area-inset-left));
+    }
+
+    .nav-button--previous::before {
+      transform: rotate(-135deg);
+    }
+
+    .nav-button--next {
+      right: max(14px, env(safe-area-inset-right));
+    }
+
+    .nav-button--next::before {
+      transform: rotate(45deg);
+    }
+
+    .footer {
+      position: relative;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 18px;
+      min-height: 58px;
+      padding: 12px max(20px, env(safe-area-inset-right)) calc(12px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+      border-top: 1px solid rgb(255 255 255 / 10%);
+      background: #141815;
+    }
+
+    .progress-track {
+      height: 3px;
+      overflow: hidden;
+      background: rgb(255 255 255 / 16%);
+    }
+
+    .progress-value {
+      display: block;
+      width: 0;
+      height: 100%;
+      background: #d9b969;
+      transition: width 220ms ease;
+    }
+
+    .counter {
+      min-width: 58px;
+      color: #e9e7df;
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
+      text-align: right;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+
+    @media (max-width: 640px) {
+      .stage {
+        padding: 8px 8px 0;
+      }
+
+      .page-frame {
+        width: min(100%, calc((100dvh - 68px - env(safe-area-inset-top) - env(safe-area-inset-bottom)) * 0.7072));
+        box-shadow: 0 12px 34px rgb(0 0 0 / 28%);
+      }
+
+      .nav-button {
+        top: auto;
+        bottom: calc(9px + env(safe-area-inset-bottom));
+        width: 42px;
+        height: 40px;
+        transform: none;
+        border: 0;
+        background: transparent;
+      }
+
+      .nav-button--previous {
+        left: max(8px, env(safe-area-inset-left));
+      }
+
+      .nav-button--next {
+        right: max(8px, env(safe-area-inset-right));
+      }
+
+      .footer {
+        grid-template-columns: minmax(0, 1fr) 56px minmax(0, 1fr);
+        min-height: 58px;
+        padding: 12px 62px calc(12px + env(safe-area-inset-bottom));
+      }
+
+      .progress-track {
+        grid-column: 1 / 4;
+        grid-row: 1;
+      }
+
+      .counter {
+        grid-column: 2;
+        grid-row: 2;
+        text-align: center;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .page-image,
+      .progress-value {
+        transition: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="viewer" id="viewer">
+    <section class="stage" aria-label="文档页面">
+      <div class="page-frame">
+        <img
+          class="page-image"
+          id="pageImage"
+          src="pages/page-01.jpg"
+          alt="茵臣九华黄精百问百答，第 1 页"
+          width="1191"
+          height="1684"
+          fetchpriority="high"
+        >
+      </div>
+    </section>
+
+    <button class="nav-button nav-button--previous" id="previousButton" type="button" aria-label="上一页"></button>
+    <button class="nav-button nav-button--next" id="nextButton" type="button" aria-label="下一页"></button>
+
+    <footer class="footer">
+      <div class="progress-track" aria-hidden="true">
+        <span class="progress-value" id="progressValue"></span>
+      </div>
+      <span class="counter" id="counter">1 / 21</span>
+    </footer>
+
+    <p class="sr-only" id="pageStatus" aria-live="polite">当前第 1 页，共 21 页</p>
+  </main>
+
+  <script>
+    const totalPages = 21;
+    const viewer = document.getElementById("viewer");
+    const pageImage = document.getElementById("pageImage");
+    const previousButton = document.getElementById("previousButton");
+    const nextButton = document.getElementById("nextButton");
+    const progressValue = document.getElementById("progressValue");
+    const counter = document.getElementById("counter");
+    const pageStatus = document.getElementById("pageStatus");
+
+    let currentPage = pageFromHash();
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let changeTimer = null;
+
+    function pageFromHash() {
+      const page = Number.parseInt(window.location.hash.slice(1), 10);
+      return Number.isInteger(page) && page >= 1 && page <= totalPages ? page : 1;
+    }
+
+    function imagePath(page) {
+      return `pages/page-${String(page).padStart(2, "0")}.jpg`;
+    }
+
+    function preloadNearbyPages() {
+      [currentPage - 1, currentPage + 1]
+        .filter((page) => page >= 1 && page <= totalPages)
+        .forEach((page) => {
+          const image = new Image();
+          image.src = imagePath(page);
+        });
+    }
+
+    function renderPage(animate = true) {
+      window.clearTimeout(changeTimer);
+
+      const update = () => {
+        pageImage.src = imagePath(currentPage);
+        pageImage.alt = `茵臣九华黄精百问百答，第 ${currentPage} 页`;
+        counter.textContent = `${currentPage} / ${totalPages}`;
+        pageStatus.textContent = `当前第 ${currentPage} 页，共 ${totalPages} 页`;
+        progressValue.style.width = `${(currentPage / totalPages) * 100}%`;
+        previousButton.disabled = currentPage === 1;
+        nextButton.disabled = currentPage === totalPages;
+        preloadNearbyPages();
+
+        pageImage.addEventListener("load", () => {
+          pageImage.classList.remove("is-changing");
+        }, { once: true });
+      };
+
+      if (animate) {
+        pageImage.classList.add("is-changing");
+        changeTimer = window.setTimeout(update, 120);
+      } else {
+        update();
+        pageImage.classList.remove("is-changing");
+      }
+    }
+
+    function goToPage(page) {
+      const nextPage = Math.min(totalPages, Math.max(1, page));
+      if (nextPage === currentPage) return;
+
+      currentPage = nextPage;
+      history.replaceState(null, "", `#${currentPage}`);
+      renderPage();
+    }
+
+    previousButton.addEventListener("click", () => goToPage(currentPage - 1));
+    nextButton.addEventListener("click", () => goToPage(currentPage + 1));
+
+    window.addEventListener("keydown", (event) => {
+      if (event.key === "ArrowLeft" || event.key === "PageUp") {
+        event.preventDefault();
+        goToPage(currentPage - 1);
+      }
+
+      if (event.key === "ArrowRight" || event.key === "PageDown" || event.key === " ") {
+        event.preventDefault();
+        goToPage(currentPage + 1);
+      }
+    });
+
+    window.addEventListener("hashchange", () => {
+      const page = pageFromHash();
+      if (page !== currentPage) {
+        currentPage = page;
+        renderPage();
+      }
+    });
+
+    viewer.addEventListener("touchstart", (event) => {
+      const touch = event.changedTouches[0];
+      touchStartX = touch.clientX;
+      touchStartY = touch.clientY;
+    }, { passive: true });
+
+    viewer.addEventListener("touchend", (event) => {
+      const touch = event.changedTouches[0];
+      const distanceX = touch.clientX - touchStartX;
+      const distanceY = touch.clientY - touchStartY;
+
+      if (Math.abs(distanceX) < 48 || Math.abs(distanceX) <= Math.abs(distanceY)) return;
+      goToPage(currentPage + (distanceX < 0 ? 1 : -1));
+    }, { passive: true });
+
+    if (!window.location.hash) {
+      history.replaceState(null, "", "#1");
+    }
+
+    renderPage(false);
+  </script>
+</body>
+</html>
